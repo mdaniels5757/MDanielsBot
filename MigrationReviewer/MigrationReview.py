@@ -328,7 +328,7 @@ def main():
             # Function already did replacement
             print('Migration redundant, i = {0}.'.format(i))
         elif isInelgible(Page):
-            # If the migration succeeded
+            # If the changes succeeded
             if (migration_inelgible(page)):
                 print('Migration inelgible, i = {0}.'.format(i));
             # If it failed
@@ -349,9 +349,15 @@ def main():
             # Skip (at least for now)
             continue;
         elif isEligible(Page):
-                migration_relicense(page);
-                print('Migration relicensed, i = {0}.'.format(i));
-                continue;
+                if migration_relicense(page):
+                    print('Migration relicensed, i = {0}.'.format(i));
+                    continue;
+                else:
+                    print("BEGIN PAGE {0} ({1}):".format(i, page.title()))
+                    print(page.get())
+                    print("END PAGE {0}".format(i))
+                    print(('Migration elgible, but no replacement made!'\
+                     + ' (i= {0})').format(i))
         else:
             print("BEGIN PAGE {0} ({1}):".format(i, page.title()))
             print(page.get())
