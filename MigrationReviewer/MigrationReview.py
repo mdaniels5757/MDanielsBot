@@ -99,12 +99,15 @@ def process_orig_upload_log(page):
     
     numuploads = len(col) - 1
     if (numuploads > 1): return "nonefound"; # Process these manually for now
-    oldUploadDate = datetime.strptime(col[1], "%Y-%m-%d %H:%M");
-    if (oldUploadDate < mustBeBefore):
-        return "eligible";
-    elif (oldUploadDate > mustBeBefore):
-        return "inelgible";
-    else:
+    try:
+        oldUploadDate = datetime.strptime(col[1], "%Y-%m-%d %H:%M");
+        if (oldUploadDate < mustBeBefore):
+            return "eligible";
+        elif (oldUploadDate > mustBeBefore):
+            return "inelgible";
+        else:
+            return "nonefound";
+    except:
         return "nonefound";
 
 # Performs replacements for pages inelgible for license migration
@@ -252,7 +255,7 @@ def main():
     i = 0;
     for page in cat.articles():
         i = i + 1;
-        time.sleep(3);
+        time.sleep(1);
         # If the file is redundant, it doesn't matter if it's inelgible.
         if (migration_redundant(page)):
             print('Migration redundant, i = {0}.'.format(i))
@@ -264,10 +267,9 @@ def main():
 
             # If it's inelgible, mark it accordingly
             isInelgible = ((exif_too_new(latestFInfo) and\
-                    exif_too_new(oldestFInfo)) or (\
-                    (process_orig_upload_date(page.oldest_revision) == "ineligible") and\
-                    (process_orig_upload_date(page.latest_revision) == "ineligible")\
-                    ))
+                    exif_too_new(oldestFInfo)) or \
+                    (process_orig_upload_date(page.latest_revision) == "ineligible") or\
+                    process_orig_upload_log(page) == "ineligible")
 
             if (isInelgible):
                 if (migration_inelgible(page)):
