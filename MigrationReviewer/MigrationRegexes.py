@@ -15,7 +15,7 @@
 
 import re
 
-# For when it's inelgible
+# For when it's inelgible, redundant, or opted out.
 GFDL_re = re.compile(u'\{\{GFDL'
                      u'(\-retouched|\-self|\-self\-with\-disclaimers|\-self\-en|'
                         u'\-with-disclaimers|\-en)?'
