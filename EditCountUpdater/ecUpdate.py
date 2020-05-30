@@ -44,8 +44,8 @@ for userpage in enGlobalTemplatePage.embeddedin(namespaces=2):
         subpage.put(globalEC, summary="Updating edit count")
 
 commonswiki = pywikibot.Site('commons', 'commons');
-commonsLocalTemplatePage = pywikibot.Page(enwiki, 'User:MDanielsBot/LocalEC')
-commonsGlobalTemplatePage = pywikibot.Page(enwiki, 'User:MDanielsBot/GlobalEC')
+commonsLocalTemplatePage = pywikibot.Page(commonswiki, 'User:MDanielsBot/LocalEC')
+commonsGlobalTemplatePage = pywikibot.Page(commonswiki, 'User:MDanielsBot/GlobalEC')
 
 # Local EC for commonswiki
 for userpage in commonsLocalTemplatePage.embeddedin(namespaces=2):
