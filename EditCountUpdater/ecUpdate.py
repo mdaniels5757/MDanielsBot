@@ -27,6 +27,11 @@ for userpage in enLocalTemplatePage.embeddedin(namespaces=2):
     localEC = user.editCount();
     subpage_name = enLocalTemplatePage.title() + '/' + username
     subpage = pywikibot.Page(enwiki, subpage_name)
+    
+    # Don't get caught in an infinite loop
+    if username == "MDanielsBot" and (abs(subpage.text - localEC) <= 10):
+        continue;
+    
     if subpage.text != localEC:
         subpage.put(localEC, summary="Updating edit count")
     
@@ -40,6 +45,11 @@ for userpage in enGlobalTemplatePage.embeddedin(namespaces=2):
     globalEC = globaleditcount(user);
     subpage_name = enGlobalTemplatePage.title() + '/' + username
     subpage = pywikibot.Page(enwiki, subpage_name)
+    
+    # Don't get caught in an infinite loop
+    if username == "MDanielsBot" and (abs(subpage.text - globalEC) <= 10):
+        continue;
+    
     if subpage.text != globalEC:
         subpage.put(globalEC, summary="Updating edit count")
 
@@ -57,6 +67,11 @@ for userpage in commonsLocalTemplatePage.embeddedin(namespaces=2):
     localEC = user.editCount();
     subpage_name = commonsLocalTemplatePage.title() + '/' + username
     subpage = pywikibot.Page(commonswiki, subpage_name)
+    
+    # Don't get caught in an infinite loop
+    if username == "MDanielsBot" and (abs(subpage.text - localEC) <= 10):
+        continue;
+    
     if subpage.text != localEC:
         subpage.put(localEC, summary="Updating edit count")
     
@@ -70,5 +85,10 @@ for userpage in commonsGlobalTemplatePage.embeddedin(namespaces=2):
     globalEC = globaleditcount(user);
     subpage_name = commonsGlobalTemplatePage.title() + '/' + username
     subpage = pywikibot.Page(commonswiki, subpage_name)
+    
+    # Don't get caught in an infinite loop
+    if username == "MDanielsBot" and (abs(subpage.text - globalEC) <= 10):
+        continue;
+    
     if subpage.text != globalEC:
         subpage.put(globalEC, summary="Updating edit count")
