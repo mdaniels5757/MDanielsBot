@@ -22,7 +22,7 @@ for userpage in enLocalTemplatePage.embeddedin(namespaces=2):
     if userpage.depth != 0: continue;
     username = userpage.title(with_ns=False)
     user = pywikibot.page.User(enwiki, userpage.title(with_ns=False));
-    if (user.groups() == ['*', 'user'] or user.groups() == ['*', 'user', 'autoconfirmed']):
+    if "extendedconfirmed" not in user.groups() and username != "MDanielsBot":
         continue;
     localEC = user.editCount();
     subpage_name = enLocalTemplatePage.title() + '/' + username
@@ -35,7 +35,7 @@ for userpage in enGlobalTemplatePage.embeddedin(namespaces=2):
     if userpage.depth != 0: continue;
     username = userpage.title(with_ns=False)
     user = pywikibot.page.User(enwiki, userpage.title(with_ns=False));
-    if (user.groups() == ['*', 'user'] or user.groups() == ['*', 'user', 'autoconfirmed']):
+    if "extendedconfirmed" not in user.groups() and username != "MDanielsBot":
         continue;
     globalEC = globaleditcount(user);
     subpage_name = enGlobalTemplatePage.title() + '/' + username
