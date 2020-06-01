@@ -31,16 +31,9 @@ for userpage in enLocalTemplatePage.embeddedin(namespaces=2):
     subpage_name = enLocalTemplatePage.title() + '/' + username
     subpage = pywikibot.Page(enwiki, subpage_name)
     
-    # Only update every 100 edits for the bot, 20 for others
-    if username == "MDanielsBot":
-        tol = 100;
-    else:
-        tol = 20;
-    
-    if (abs(int(subpage.text) - localEC) < tol):
-        continue;
-    else:
-        localEC = round(localEC, tol)
+    # Only update every 100 edits
+    tol = 100;
+    localEC = floor(localEC, tol)
         
     if subpage.text != localEC:
         subpage.put(localEC, summary="Updating edit count")
@@ -56,16 +49,9 @@ for userpage in enGlobalTemplatePage.embeddedin(namespaces=2):
     subpage_name = enGlobalTemplatePage.title() + '/' + username
     subpage = pywikibot.Page(enwiki, subpage_name)
     
-    # Only update every 100 edits for the bot, 20 for others
-    if username == "MDanielsBot":
-        tol = 100;
-    else:
-        tol = 20;
-    
-    if (abs(int(subpage.text) - globalEC) < tol):
-        continue;
-    else:
-        globalEC = round(globalEC, tol)
+    # Only update every 100 edits
+    tol = 100;
+    globalEC = floor(globalEC, tol)
     
     if subpage.text != globalEC:
         subpage.put(globalEC, summary="Updating edit count")
@@ -85,19 +71,12 @@ for userpage in commonsLocalTemplatePage.embeddedin(namespaces=2):
     subpage_name = commonsLocalTemplatePage.title() + '/' + username
     subpage = pywikibot.Page(commonswiki, subpage_name)
     
-    # Only update every 100 edits for the bot, 20 for others
-    if username == "MDanielsBot":
-        tol = 100;
-    else:
-        tol = 20;
-    
-    if (abs(int(subpage.text) - localEC) < tol):
-        continue;
-    else:
-        localEC = round(localEC, tol)
+    # Only update every 100 edits
+    tol = 100;
+    localEC = floor(localEC, tol)
     
     if subpage.text != localEC:
-        subpage.put(localEC, summary="Updating edit count")
+        subpage.put(localEC, summary="Updating edit count", botflag=True)
     
 # Global EC for commonswiki
 for userpage in commonsGlobalTemplatePage.embeddedin(namespaces=2):
@@ -110,16 +89,9 @@ for userpage in commonsGlobalTemplatePage.embeddedin(namespaces=2):
     subpage_name = commonsGlobalTemplatePage.title() + '/' + username
     subpage = pywikibot.Page(commonswiki, subpage_name)
     
-    # Only update every 100 edits for the bot, 20 for others
-    if username == "MDanielsBot":
-        tol = 100;
-    else:
-        tol = 20;
-    
-    if (abs(int(subpage.text) - globalEC) < tol):
-        continue;
-    else:
-        globalEC = round(globalEC, tol)
+    # Only update every 100 edits
+    tol = 100;
+    globalEC = floor(globalEC, tol)
     
     if subpage.text != globalEC:
-        subpage.put(globalEC, summary="Updating edit count")
+        subpage.put(globalEC, summary="Updating edit count", botflag=True)
