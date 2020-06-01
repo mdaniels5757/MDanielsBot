@@ -5,10 +5,6 @@ from datetime import datetime, timezone
 def floor(num, roundto):
     return num - (num % roundto);
 
-enwiki = pywikibot.Site('en', 'wikipedia');
-enLocalTemplatePage = pywikibot.Page(enwiki, 'User:MDanielsBot/LocalEC')
-enGlobalTemplatePage = pywikibot.Page(enwiki, 'User:MDanielsBot/GlobalEC')
-
 def globaleditcount(user):
     params = {
     	"action": "query",
@@ -19,6 +15,11 @@ def globaleditcount(user):
     }
     response = pywikibot.data.api.Request(site=user.site, parameters=params).submit()
     return response['query']['globaluserinfo']['editcount']
+
+enwiki = pywikibot.Site('en', 'wikipedia');
+enwiki.login();
+enLocalTemplatePage = pywikibot.Page(enwiki, 'User:MDanielsBot/LocalEC')
+enGlobalTemplatePage = pywikibot.Page(enwiki, 'User:MDanielsBot/GlobalEC')
 
 # Local EC for enwiki
 for userpage in enLocalTemplatePage.embeddedin(namespaces=2):
