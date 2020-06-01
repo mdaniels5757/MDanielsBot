@@ -35,7 +35,7 @@ for userpage in enLocalTemplatePage.embeddedin(namespaces=2):
     tol = 100;
     localEC = floor(localEC, tol)
         
-    if subpage.text != localEC:
+    if int(subpage.text) != localEC:
         subpage.put(localEC, summary="Updating edit count")
     
 # Global EC for enwiki
@@ -53,7 +53,7 @@ for userpage in enGlobalTemplatePage.embeddedin(namespaces=2):
     tol = 100;
     globalEC = floor(globalEC, tol)
     
-    if subpage.text != globalEC:
+    if int(subpage.text) != globalEC:
         subpage.put(globalEC, summary="Updating edit count")
 
 commonswiki = pywikibot.Site('commons', 'commons');
@@ -75,7 +75,7 @@ for userpage in commonsLocalTemplatePage.embeddedin(namespaces=2):
     tol = 100;
     localEC = floor(localEC, tol)
     
-    if subpage.text != localEC:
+    if int(subpage.text) != localEC:
         subpage.put(localEC, summary="Updating edit count", botflag=True)
     
 # Global EC for commonswiki
@@ -93,5 +93,5 @@ for userpage in commonsGlobalTemplatePage.embeddedin(namespaces=2):
     tol = 100;
     globalEC = floor(globalEC, tol)
     
-    if subpage.text != globalEC:
+    if int(subpage.text) != globalEC:
         subpage.put(globalEC, summary="Updating edit count", botflag=True)
