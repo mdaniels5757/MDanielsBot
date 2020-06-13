@@ -21,19 +21,21 @@ import time
 import re
 import json
 from PIL import Image
+import pywikibot
+
+commonswiki = pywikibot.Site('commons', 'commons');
 
 S = requests.Session()
 # Comment out the first or second idURLString and regexID.
 
 #idURLString = 'https:\/\/(www\.)?finna\.fi\/Record\/.{3}\..{10}:.{8}'
 #idURLString = 'https:\/\/www\.finna\.fi\/Record\/musketti\..{4}:.{10}:.{3}'
-idURLString = 'https:\/\/(?:www\.)?finna\.fi\/Record\/(?:hkm\.|musketti\..{4}:)'
-idURLString = idURLString + '.{6,10}:(?:[^"]{8}|[^"]{3})'
+idURLString = 'https:\/\/(?:www\.)?finna\.fi\/Record\/(?:hkm\.|musketti(_satmuseo)?\..{3,4}:)[^"#\<\n]{4,10}:(?:[^"#\<\n]{1,11})?'
 regexIDURL = re.compile(idURLString, re.IGNORECASE)
 
 #regexID = re.compile('.{3}\..{10}:.{8}', re.IGNORECASE)
 #regexID = re.compile('musketti\..{4}:.{10}:.{3}', re.IGNORECASE)
-regexID = re.compile('(?:hkm\.|musketti\..{4}:).{4,10}:(?:[^"]{8}|[^"]{3})',
+regexID = re.compile('(?:hkm\.|musketti(_satmuseo)?\..{3,4}:)[^"#\<\n]{4,10}:(?:[^"#\<\n]{1,11})?',
     re.IGNORECASE)
 
 regexCCBY40 = re.compile('{{cc[- ]by[- ]4\.0}}', re.IGNORECASE)
@@ -52,7 +54,7 @@ def GetCopyrightData(id):
     URL = URLBase + id + "&field[]=imageRights&prettyPrint=false&lng=en-gb"
     raw = requests.get(URL, headers=headers)
     if (not raw):
-        print("Finna Data Error")
+        print("Finna Data Error for " + id)
         return
     response = json.loads(raw.text)
     imageRights = response["records"][0]["imageRights"]
@@ -145,7 +147,7 @@ def perPage(line):
         print(finnaIDstr)
         copyright = GetCopyrightData(finnaIDstr)
     else:
-        print("Regex no match")
+        print("Regex no match for " + line)
         return
     if copyright != "CC BY 4.0":
         outFileFail.write(line)
@@ -156,7 +158,14 @@ def perPage(line):
     
     diffPercent = CompareImages()
     if diffPercent <= 9:
-        outFilePass.write(line)
+        #outFilePass.write(line)
+        page = pywikibot.page.Page(commonswiki, line)
+        text = newtext = page.text
+        newtext = newtext.replace('{{FinnaReview}}', '')
+        newtext = newtext.replace('{{cc-by-4.0}}', '{{cc-by 4.0}}\n'
+                 '{{FinnaReview|site=Finna|user={{subst:REVISIONUSER}}|date={{subst:#time: Y-m-d }}}}')
+        if (newtext != text):
+            page.put(newtext, r'FinnaReview passed')
         str = "PASS: " + line + " diffPercent" + "{:.2f}".format(diffPercent)
     else:
         outFileFail.write(line)
@@ -165,8 +174,9 @@ def perPage(line):
     print(str)
 
 with open("infile.txt",'r') as infile:
-    for line in infile:
-        perPage(line)
+    cat = pywikibot.page.Category(commonswiki, title='Finna review needed')
+    for page in commonswiki.categorymembers(cat, member_type='file'):
+        perPage(page.title())
         time.sleep(1)
     outFilePass.close()
     outFileFail.close()
