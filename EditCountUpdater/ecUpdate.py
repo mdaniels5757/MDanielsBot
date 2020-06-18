@@ -26,8 +26,6 @@ for userpage in enLocalTemplatePage.embeddedin(namespaces=2):
     if userpage.depth != 0: continue;
     username = userpage.title(with_ns=False)
     user = pywikibot.page.User(enwiki, userpage.title(with_ns=False));
-    if "extendedconfirmed" not in user.groups() and username != "MDanielsBot":
-        continue;
     localEC = user.editCount();
     subpage_name = enLocalTemplatePage.title() + '/' + username
     subpage = pywikibot.Page(enwiki, subpage_name)
@@ -36,6 +34,9 @@ for userpage in enLocalTemplatePage.embeddedin(namespaces=2):
     tol = 100;
     localEC = floor(localEC, tol)
         
+    if localEC <= 5000 and username != "MDanielsBot":
+        continue;
+    
     if int(subpage.text) != localEC:
         subpage.put(localEC, summary="Updating edit count")
     
@@ -44,8 +45,6 @@ for userpage in enGlobalTemplatePage.embeddedin(namespaces=2):
     if userpage.depth != 0: continue;
     username = userpage.title(with_ns=False)
     user = pywikibot.page.User(enwiki, userpage.title(with_ns=False));
-    if "extendedconfirmed" not in user.groups() and username != "MDanielsBot":
-        continue;
     globalEC = globaleditcount(user);
     subpage_name = enGlobalTemplatePage.title() + '/' + username
     subpage = pywikibot.Page(enwiki, subpage_name)
@@ -53,6 +52,9 @@ for userpage in enGlobalTemplatePage.embeddedin(namespaces=2):
     # Only update every 100 edits
     tol = 100;
     globalEC = floor(globalEC, tol)
+    
+    if globalEC <= 5000 and username != "MDanielsBot":
+        continue;
     
     if int(subpage.text) != globalEC:
         subpage.put(globalEC, summary="Updating edit count")
@@ -66,8 +68,6 @@ for userpage in commonsLocalTemplatePage.embeddedin(namespaces=2):
     if userpage.depth != 0: continue;
     username = userpage.title(with_ns=False)
     user = pywikibot.page.User(commonswiki, userpage.title(with_ns=False));
-    if (user.groups() == ['*', 'user'] or user.groups() == ['*', 'user', 'autoconfirmed']):
-        continue;
     localEC = user.editCount();
     subpage_name = commonsLocalTemplatePage.title() + '/' + username
     subpage = pywikibot.Page(commonswiki, subpage_name)
@@ -75,6 +75,9 @@ for userpage in commonsLocalTemplatePage.embeddedin(namespaces=2):
     # Only update every 100 edits
     tol = 100;
     localEC = floor(localEC, tol)
+    
+    if localEC <= 5000 and username != "MDanielsBot":
+        continue;
     
     if int(subpage.text) != localEC:
         subpage.put(localEC, summary="Updating edit count", botflag=True)
@@ -84,8 +87,6 @@ for userpage in commonsGlobalTemplatePage.embeddedin(namespaces=2):
     if userpage.depth != 0: continue;
     username = userpage.title(with_ns=False)
     user = pywikibot.page.User(commonswiki, userpage.title(with_ns=False));
-    if (user.groups() == ['*', 'user'] or user.groups() == ['*', 'user', 'autoconfirmed']):
-        continue;
     globalEC = globaleditcount(user);
     subpage_name = commonsGlobalTemplatePage.title() + '/' + username
     subpage = pywikibot.Page(commonswiki, subpage_name)
@@ -93,6 +94,9 @@ for userpage in commonsGlobalTemplatePage.embeddedin(namespaces=2):
     # Only update every 100 edits
     tol = 100;
     globalEC = floor(globalEC, tol)
+    
+    if globalEC <= 5000 and username != "MDanielsBot":
+        continue;
     
     if int(subpage.text) != globalEC:
         subpage.put(globalEC, summary="Updating edit count", botflag=True)
