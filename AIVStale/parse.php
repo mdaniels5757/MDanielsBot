@@ -24,7 +24,7 @@ SOFTWARE. */
 
 //Master SQLBot switch
 // include( "/data/project/botwatch/sqlbot-run.php" );
-include( "/data/project/botwatch/credentials.php" );
+include( "/data/project/mdanielsbot/credentials.php" );
 
 //Config
 $displayNames = FALSE; //Display editor names in the edit summary
@@ -107,7 +107,7 @@ if( $active < 60 ) {
     $timeLimit = $timeLimit - $offset;
 }
 echo "Stale time is at $timeLimit based on $active active in the last hour. diff is $diff and offset is $offset.\n";
-$extraES = " stale time at $timeLimit hours [[User:SQL/AIVStale|Explanation]].";
+$extraES = " Stale time is at $timeLimit hours, see [[User:SQL/AIVStale|Explanation]].";
 
 
 $cookies = tempnam( '../cookies/', 'cookie.txt' );
@@ -289,7 +289,7 @@ foreach ( $source as $line )
 }
 $toFile = implode( "\n", $out );
 $page = $targetPage;
-$summary = "BOT: Removing Stale AIV Reports [[Wikipedia:Bots/Requests_for_approval/MDanielsBot 4|BRFA]]$extraES";
+$summary = "BOT TRIAL: Removing Stale AIV Reports. [[Wikipedia:Bots/Requests_for_approval/MDanielsBot 4|BRFA]].$extraES";
 $text = $toFile;
 $logintoken = getLoginToken(); // Step 1
 loginRequest( $logintoken ); // Step 2
