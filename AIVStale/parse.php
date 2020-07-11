@@ -289,7 +289,7 @@ foreach ( $source as $line )
 }
 $toFile = implode( "\n", $out );
 $page = $targetPage;
-$summary = "BOT TRIAL: Removing Stale AIV Reports. [[Wikipedia:Bots/Requests_for_approval/MDanielsBot 4|BRFA]].$extraES";
+$summary = "BOT: Removing Stale AIV Reports. [[Wikipedia:Bots/Requests_for_approval/MDanielsBot 4|BRFA]].$extraES";
 $text = $toFile;
 $logintoken = getLoginToken(); // Step 1
 loginRequest( $logintoken ); // Step 2
