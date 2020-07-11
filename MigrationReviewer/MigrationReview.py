@@ -19,11 +19,13 @@ import MigrationRegexes
 import time
 from datetime import datetime, timezone
 import wikitextparser as wtp
+import sys
 
 site = pywikibot.Site('commons', 'commons');
-categoryName = "Category:License migration candidates";
-optOutAutoPage = pywikibot.Page("User:MDanielsBot/LROptOut#List (Automatic)");
-optOutManualPage = pywikibot.Page("User:MDanielsBot/LROptOut#List (Manual)");
+# categoryName = "Category:License migration candidates";
+categoryName = "Category:License migration needs review";
+optOutAutoPage = pywikibot.Page(site, "User:MDanielsBot/LROptOut#List (Automatic)");
+optOutManualPage = pywikibot.Page(site, "User:MDanielsBot/LROptOut#List (Manual)");
 mustBeBefore = datetime.utcfromtimestamp(1248998400);
 
 # Computes if the file's EXIF data is too new
@@ -31,16 +33,20 @@ mustBeBefore = datetime.utcfromtimestamp(1248998400);
 # Returns: the bool photoTooNew, which is true if the photo is too new
 #            and false if it is not.
 def exif_too_new(file_info):
-    file_metadata = file_info["metadata"];
+    try:
+        file_metadata = file_info["metadata"];
+    except:
+        return False;
     
     if file_metadata is None: return False;
     
     # else
     datetime_str = next(filter(lambda x: x['name'] == 'DateTime', file_metadata),\
         {'value' : "0000:00:00 00:00:00"})['value'];
-    if datetime_str == "0000:00:00 00:00:00":
-        return False;
-    theDatetime = datetime.strptime(datetime_str, "%Y:%m:%d %H:%M:%S");
+    try:
+        theDatetime = datetime.strptime(datetime_str, "%Y:%m:%d %H:%M:%S");
+    except Exception as e:
+        return False
 
     original_datetime_str = next(filter(lambda x: x['name'] == 'DateTime',\
         file_metadata), {'value' : "0000:00:00 00:00:00"})['value'];
@@ -114,10 +120,17 @@ def process_orig_upload_log(page):
 # Input: pywikibot page object
 # Returns: True if replacement made, false if not
 def migration_inelgible(page):
-    text = newtext = page.get();
+    rawtext = newtext = page.text
+    text_tuple = pywikibot.textlib.extract_sections(rawtext)
+    text = text_tuple[0]
+    for sectionname, sectiontext in text_tuple[1]:
+        if "{{Original upload log}}" in sectionname:
+            continue
+        else:
+            text += sectionname + '\n' + sectiontext
+    text += text_tuple[2]
     
-    match = MigrationRegexes.GFDL_re.search(text)
-    if match:
+    for match in MigrationRegexes.GFDL_re.finditer(text):
         oldstring = match.group(0);
         newstring = MigrationRegexes.GFDL_re.sub(
                     '{{GFDL\g<1>\g<2>\g<3>|migration=not-eligible}}',
@@ -125,8 +138,7 @@ def migration_inelgible(page):
                     );
         newtext = newtext.replace(oldstring, newstring, 1);
     
-    match = MigrationRegexes.Self_re.search(text);
-    if match:
+    for match in MigrationRegexes.Self_re.finditer(text):
         oldstring = match.group(0);
         newstring = MigrationRegexes.GFDL_re.sub(
                     '{{self|\g<1>GFDL|migration=not-eligible}}',
@@ -134,8 +146,7 @@ def migration_inelgible(page):
                      );
         newtext = newtext.replace(oldstring, newstring, 1);
 
-    match = MigrationRegexes.kettos_re.search(text);
-    if match:
+    for match in MigrationRegexes.kettos_re.finditer(text):
         oldstring = match.group(0);
         newstring = MigrationRegexes.GFDL_re.sub(
                     u'{{kettős-GFDL-cc-by-sa-2.5\g<1>|migration=not-eligible}}',
@@ -143,7 +154,7 @@ def migration_inelgible(page):
                      );
         newtext = newtext.replace(oldstring, newstring, 1);
     
-    if (newtext != text):
+    if (newtext != rawtext):
         page.put(newtext, r'[[Commons:License_Migration_Task_Force/Migration'
                          + r'|License Migration]]: not-eligible')
         return True;
@@ -154,10 +165,17 @@ def migration_inelgible(page):
 # Input: pywikibot page object
 # Returns: True if replacement made, false if not
 def migration_relicense(page):
-    text = newtext = page.text
+    rawtext = newtext = page.text
+    text_tuple = pywikibot.textlib.extract_sections(rawtext)
+    text = text_tuple[0]
+    for sectionname, sectiontext in text_tuple[1]:
+        if "{{Original upload log}}" in sectionname:
+            continue
+        else:
+            text += sectionname + '\n' + sectiontext
+    text += text_tuple[2]
     
-    match = MigrationRegexes.GFDL_re.search(text);
-    if match:
+    for match in MigrationRegexes.GFDL_re.finditer(text):
         oldstring = match.group(0);
         newstring = MigrationRegexes.GFDL_re.sub(
                     u'{{GFDL\g<1>\g<2>\g<3>|migration=relicense}}',
@@ -165,8 +183,7 @@ def migration_relicense(page):
                     );
         newtext = newtext.replace(oldstring, newstring, 1);
     
-    match = MigrationRegexes.Self_re.search(text);
-    if match:
+    for match in MigrationRegexes.Self_re.finditer(text):
         oldstring = match.group(0);
         newstring = MigrationRegexes.GFDL_re.sub(
                     u'{{self|\g<1>GFDL|migration=relicense}}',
@@ -174,8 +191,7 @@ def migration_relicense(page):
                      );
         newtext = newtext.replace(oldstring, newstring, 1);
 
-    MigrationRegexes.kettos_re.search(text);
-    if match:
+    for match in MigrationRegexes.kettos_re.finditer(text):
         oldstring = match.group(0);
         newstring = MigrationRegexes.GFDL_re.sub(
                      u'{{kettős-GFDL-cc-by-sa-2.5\g<1>|migration=relicense}}',
@@ -183,7 +199,7 @@ def migration_relicense(page):
                      );
         newtext = newtext.replace(oldstring, newstring, 1);
     
-    if (newtext != text):
+    if (newtext != rawtext):
         page.put(newtext, r'[[Commons:License_Migration_Task_Force/Migration'
                          + r'|License Migration]]: relicensed')
         return True;
@@ -195,30 +211,35 @@ def migration_relicense(page):
 # If not, performs replacements and returns true.
 # Input: pywikibot page object
 def migration_redundant(page):
-    text = newtext = page.text;
+    rawtext = newtext = page.text
+    text_tuple = pywikibot.textlib.extract_sections(rawtext)
+    text = text_tuple[0]
+    for sectionname, sectiontext in text_tuple[1]:
+        if "{{Original upload log}}" in sectionname:
+            continue
+        else:
+            text += sectionname + '\n' + sectiontext
+    text += text_tuple[2]
     
     redundant_re0 = re.compile('Cc-by-3\.0|Cc-by-sa-3\.0', re.IGNORECASE)
-    if (redundant_re0 == None): return False;
+    if (redundant_re0.match(text) == None): return False;
     # Otherwise, continue
     
-    match = MigrationRegexes.redundant_re1.search(text);
-    if match:
+    for match in MigrationRegexes.redundant_re1.finditer(text):
         oldstring = match.group(0);
         newstring = MigrationRegexes.redundant_re1.sub(
                     '{{self|GFDL|cc-by-sa-3.0|\g<1>migration=redundant}}',\
                     oldstring, re.IGNORECASE);
         newtext = newtext.replace(oldstring, newstring, 1);
     
-    MigrationRegexes.redundant_re2.search(text);
-    if match:
+    for match in MigrationRegexes.redundant_re2.finditer(text):
         oldstring = match.group(0);
         newstring = MigrationRegexes.redundant_re2.sub(
                     '{{self|GFDL|cc-by-3.0|\g<1>migration=redundant}}'\
                     , oldstring, re.IGNORECASE);
         newtext = newtext.replace(oldstring, newstring, 1);
     
-    match = MigrationRegexes.redundant_re3.search(text)
-    if match:
+    for match in MigrationRegexes.redundant_re3.finditer(text):
         oldstring = match.group(0);
         newstring = MigrationRegexes.redundant_re3.sub(
                     '{{self|GFDL|cc-by-sa-3.0,2.5,2.0,1.0'
@@ -227,23 +248,21 @@ def migration_redundant(page):
         newtext = newtext.replace(oldstring, newstring, 1);
     
     if (MigrationRegexes.redundant_re4a.search(text) != None):
-        match = MigrationRegexes.redundant_re4b.search(text)
-        if match:
+        for match in MigrationRegexes.redundant_re4b.finditer(text):
             oldstring = match.group(0);
             newstring = MigrationRegexes.redundant_re4b.sub(
                         '{{GFDL\g<1>|migration=redundant}}',
                         oldstring, re.IGNORECASE);
             newtext = newtext.replace(oldstring, newstring, 1);
             
-    match = MigrationRegexes.redundant_re5.search(text)
-    if match:
+    for match in MigrationRegexes.redundant_re5.finditer(text):
         oldstring = match.group(0);
         newstring = MigrationRegexes.redundant_re5.sub(
                     '{{self|\g<1>cc-by-sa-\g<2>|GFDL|migration=redundant}}',
                     oldstring, re.IGNORECASE);
         newtext = newtext.replace(oldstring, newstring, 1);
     
-    if (newtext != text):
+    if (newtext != rawtext):
         page.put(newtext, r'[[Commons:License_Migration_Task_Force/Migration'
                           + r'|License Migration]]: redundant')
         return True;
@@ -253,10 +272,17 @@ def migration_redundant(page):
 # Performs replacements for pages where the uploader opted out.
 # Returns true if replacement made, false if not.
 def migration_opt_out(page):
-    text = newtext = page.text
+    rawtext = newtext = page.text
+    text_tuple = pywikibot.textlib.extract_sections(rawtext)
+    text = text_tuple[0]
+    for sectionname, sectiontext in text_tuple[1]:
+        if "{{Original upload log}}" in sectionname:
+            continue
+        else:
+            text += sectionname + '\n' + sectiontext
+    text += text_tuple[2]
     
-    match = MigrationRegexes.GFDL_re.search(text);
-    if match:
+    for match in MigrationRegexes.GFDL_re.finditer(text):
         oldstring = match.group(0);
         newstring = MigrationRegexes.GFDL_re.sub(
                     u'{{GFDL\g<1>\g<2>\g<3>|migration=opt-out}}',
@@ -264,8 +290,7 @@ def migration_opt_out(page):
                     );
         newtext = newtext.replace(oldstring, newstring, 1);
     
-    match = MigrationRegexes.Self_re.search(text);
-    if match:
+    for match in MigrationRegexes.Self_re.finditer(text):
         oldstring = match.group(0);
         newstring = MigrationRegexes.GFDL_re.sub(
                     u'{{self|\g<1>GFDL|migration=opt-out}}',
@@ -273,8 +298,7 @@ def migration_opt_out(page):
                      );
         newtext = newtext.replace(oldstring, newstring, 1);
 
-    MigrationRegexes.kettos_re.search(text);
-    if match:
+    for match in MigrationRegexes.kettos_re.finditer(text):
         oldstring = match.group(0);
         newstring = MigrationRegexes.GFDL_re.sub(
                      u'{{kettős-GFDL-cc-by-sa-2.5\g<1>|migration=opt-out}}',
@@ -282,7 +306,7 @@ def migration_opt_out(page):
                      );
         newtext = newtext.replace(oldstring, newstring, 1);
     
-    if (newtext != text):
+    if (newtext != rawtext):
         page.put(newtext, r'[[Commons:License_Migration_Task_Force/Migration'
                          + r'|License Migration]]: User opted out')
         return True;
@@ -319,15 +343,17 @@ def isOptedOut(page):
 def main():
     cat = pywikibot.Category(site, categoryName)
     i = 0;
+    # for page in cat.articles(startprefix="A"):
     for page in cat.articles():
         i = i + 1;
-        time.sleep(1);
+        sys.stdout.flush()
+        time.sleep(0.3)
         
         # If the file is redundant, it doesn't matter if it's inelgible.
         if migration_redundant(page):
             # Function already did replacement
             print('Migration redundant, i = {0}.'.format(i))
-        elif isInelgible(Page):
+        elif isInelgible(page):
             # If the changes succeeded
             if (migration_inelgible(page)):
                 print('Migration inelgible, i = {0}.'.format(i));
@@ -338,17 +364,17 @@ def main():
                 print("END PAGE {0}".format(i))
                 print(('Migration inelgible, but no replacement made!'\
                  + ' (i= {0})').format(i));
-        elif (isOptedOut(Page) == 1):
+        elif (isOptedOut(page) == 1):
             # User in the Opted out -- manual list
             
             # Was going to perform replacement, but skip for now.
-            # migration_opt_out(Page);
+            # migration_opt_out(page);
             continue;
-        elif (isOptedOut(Page) == 2):
+        elif (isOptedOut(page) == 2):
             # User in the Opted out -- automatic list
             # Skip (at least for now)
             continue;
-        elif isEligible(Page):
+        elif isEligible(page):
                 if migration_relicense(page):
                     print('Migration relicensed, i = {0}.'.format(i));
                     continue;
