@@ -16,10 +16,10 @@
 import re
 
 # For when it's inelgible, redundant, or opted out.
-GFDL_re = re.compile(u'\{\{GFDL'
-                     u'(\-retouched|\-self|\-self\-with\-disclaimers|\-self\-en|'
-                        u'\-with-disclaimers|\-en|\-it)?'
-                     u'( ?\| ?author ?=[^\|\}]{1,100})?'
+GFDL_re = re.compile(u'\{\{(?:GFDL|GÖBL\-Kişisel)'
+                     u'(\-retouched|\-self|\-self\-with\-disclaimers|\-self\-.{2,3}|'
+                        u'\-with-disclaimers|\-no\-disclaimers|\-.{2}|\-user\-.{2,3})?'
+                     u'( ?\| ?(?:author ?)?=[^\|\}]{1,100})?'
                      u'( ?\} ?attribution ?=[^\|\}]{1,100})?'
                      u'( ?\| ?migration ?=[^\|\}]{0,15})?'
                      u'\}\}', re.IGNORECASE | re.UNICODE);
@@ -47,7 +47,7 @@ redundant_re2 = re.compile('\{\{self2?\|( ?author ?=[^\|\}]{1,60}\|)?GFDL\|cc-by
 redundant_re3 = re.compile('\{\{self\|( ?author ?=[^\|\}]{1,60}\|)?GFDL\|cc-by-sa-3\.0\,2\.5\,2\.0\,1\.0\}\}'
                            '|\{\{self\|( ?author ?=[^\|\}]{1,60}\|)?cc-by-sa-3\.0\,2\.5\,2\.0\,1\.0\|GFDL\}\}'\
                            , re.IGNORECASE)
-            
+
 redundant_re4a = re.compile('\{\{cc\-by(\-sa)?\-(3\.0|2\.0\+|1\.0\+|'
                             '3\.0\,2\.5\,2\.0\,1\.0).*\}\}')                    
 redundant_re4b = re.compile('\{\{GFDL(\-author|\-retouched|\-self|'
@@ -62,3 +62,8 @@ redundant_re5 = re.compile('\{\{self2?\|( ?author ?=[^\|\}]{1,100}\|)?GFDL\|cc-b
 
 origUploadDate_re1 = re.compile(u'\{\{Original upload date\|'
                               u'(\d{4})[\-,\|](\d{2})[\-,\|](\d{2})\}\}', re.IGNORECASE | re.UNICODE)
+
+fileimporter_re = re.compile(u'<!-- ?This file was moved here using'
+                             u' FileImporter from '
+                             u'?(https?:)?\/\/[^\-]*\.org\/wiki\/[^->]*-->',
+                             re.IGNORECASE | re.UNICODE)

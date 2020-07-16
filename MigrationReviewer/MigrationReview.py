@@ -22,8 +22,8 @@ import wikitextparser as wtp
 import sys
 
 site = pywikibot.Site('commons', 'commons');
-# categoryName = "Category:License migration candidates";
-categoryName = "Category:License migration needs review";
+categoryName = "Category:License migration candidates";
+# categoryName = "Category:License migration needs review";
 optOutAutoPage = pywikibot.Page(site, "User:MDanielsBot/LROptOut#List (Automatic)");
 optOutManualPage = pywikibot.Page(site, "User:MDanielsBot/LROptOut#List (Manual)");
 mustBeBefore = datetime.utcfromtimestamp(1248998400);
@@ -63,7 +63,7 @@ def exif_too_new(file_info):
 # Determines if there is an original upload date template. 
 #    If there is none, return the string "nonefound"
 #    If there is one, and it is too new for relicense, return "ineligible"
-#    If there is one, and it shows that the photo is elgible, return eligible".
+#    If there is one, and it shows that the photo is eligible, return eligible".
 def process_orig_upload_date(revision):
     text = revision.text;
     
@@ -76,23 +76,20 @@ def process_orig_upload_date(revision):
     origUploadDate_str = ''.join(map(str, match.groups()))
     origUploadDate = datetime.strptime(origUploadDate_str, "%Y%m%d")
     
+    print(origUploadDate)
     if (origUploadDate > mustBeBefore):
-        return "inelgible";
+        return "ineligible";
     elif (origUploadDate < mustBeBefore):
         return "eligible";
     else:
         return "nonefound";
         
-# SHOULD NOT BE USED YET
 # Determines if there is an "original upload log" table with the
 #     original upload date
 #    If there is no wikitable, return the string "nonefound"
 #    If there is one, and it is too new for relicense, return "ineligible"
-#    If there is one, and it shows that the photo is elgible, return eligible".
+#    If there is one, and it shows that the photo is eligible, return eligible".
 def process_orig_upload_log(page):
-    
-    # I SAID, shouldn't be used yet.
-    return "nonefound"
     
     text = page.text;
     p = wtp.parse(text);
@@ -107,19 +104,39 @@ def process_orig_upload_log(page):
     if (numuploads > 1): return "nonefound"; # Process these manually for now
     try:
         oldUploadDate = datetime.strptime(col[1], "%Y-%m-%d %H:%M");
-        if (oldUploadDate < mustBeBefore):
+        if (oldUploadDate <= mustBeBefore):
             return "eligible";
         elif (oldUploadDate > mustBeBefore):
-            return "inelgible";
+            return "ineligible";
         else:
             return "nonefound";
     except:
         return "nonefound";
 
-# Performs replacements for pages inelgible for license migration
+# Determines if there was 1 file version AND the file was imported with fileimporter. 
+#    If this is false, return the string "nonefound"
+#    If this is true, and it is too new for relicense, return "ineligible"
+#    If this is true, and it shows that the photo is eligible, return eligible".
+def process_fileimporter(page):
+    
+    if (MigrationRegexes.fileimporter_re.search(page.text) == None):
+        return "nonefound"
+    
+    history = page.get_file_history()
+    if len(history) > 1:
+        return "nonefound"
+    
+    ts =  list(history.keys())[0]
+    
+    if ts >= mustBeBefore:
+        return "ineligible"
+    else:
+        return "eligible"
+
+# Performs replacements for pages ineligible for license migration
 # Input: pywikibot page object
 # Returns: True if replacement made, false if not
-def migration_inelgible(page):
+def migration_ineligible(page):
     rawtext = newtext = page.text
     text_tuple = pywikibot.textlib.extract_sections(rawtext)
     text = text_tuple[0]
@@ -140,7 +157,7 @@ def migration_inelgible(page):
     
     for match in MigrationRegexes.Self_re.finditer(text):
         oldstring = match.group(0);
-        newstring = MigrationRegexes.GFDL_re.sub(
+        newstring = MigrationRegexes.Self_re.sub(
                     '{{self|\g<1>GFDL|migration=not-eligible}}',
                      oldstring, re.IGNORECASE
                      );
@@ -148,7 +165,7 @@ def migration_inelgible(page):
 
     for match in MigrationRegexes.kettos_re.finditer(text):
         oldstring = match.group(0);
-        newstring = MigrationRegexes.GFDL_re.sub(
+        newstring = MigrationRegexes.kettos_re.sub(
                     u'{{kettős-GFDL-cc-by-sa-2.5\g<1>|migration=not-eligible}}',
                      oldstring, re.IGNORECASE | re.UNICODE
                      );
@@ -161,7 +178,7 @@ def migration_inelgible(page):
     # else
     return False;
 
-# Performs replacements for pages inelgible for license migration
+# Performs replacements for pages ineligible for license migration
 # Input: pywikibot page object
 # Returns: True if replacement made, false if not
 def migration_relicense(page):
@@ -185,7 +202,7 @@ def migration_relicense(page):
     
     for match in MigrationRegexes.Self_re.finditer(text):
         oldstring = match.group(0);
-        newstring = MigrationRegexes.GFDL_re.sub(
+        newstring = MigrationRegexes.Self_re.sub(
                     u'{{self|\g<1>GFDL|migration=relicense}}',
                      oldstring, re.IGNORECASE | re.UNICODE
                      );
@@ -193,7 +210,7 @@ def migration_relicense(page):
 
     for match in MigrationRegexes.kettos_re.finditer(text):
         oldstring = match.group(0);
-        newstring = MigrationRegexes.GFDL_re.sub(
+        newstring = MigrationRegexes.kettos_re.sub(
                      u'{{kettős-GFDL-cc-by-sa-2.5\g<1>|migration=relicense}}',
                      oldstring, re.IGNORECASE | re.UNICODE
                      );
@@ -300,7 +317,7 @@ def migration_opt_out(page):
 
     for match in MigrationRegexes.kettos_re.finditer(text):
         oldstring = match.group(0);
-        newstring = MigrationRegexes.GFDL_re.sub(
+        newstring = MigrationRegexes.kettos_re.sub(
                      u'{{kettős-GFDL-cc-by-sa-2.5\g<1>|migration=opt-out}}',
                      oldstring, re.IGNORECASE | re.UNICODE
                      );
@@ -313,21 +330,22 @@ def migration_opt_out(page):
     else:
         return False;
 
-# Determines if the page is inelgible for migration
+# Determines if the page is ineligible for migration
 # Input: Page object. Output: bool.
-def isInelgible(page):
+def isineligible(page):
     oldestFInfo = page.oldest_file_info;
     latestFInfo = page.latest_file_info;
-    return ((exif_too_new(latestFInfo) and\
-            exif_too_new(oldestFInfo)) or \
-            (process_orig_upload_date(page.latest_revision) ==
-            "ineligible") or process_orig_upload_log(page) == "ineligible");
+    return ( (exif_too_new(latestFInfo) and exif_too_new(oldestFInfo)) or \
+            (process_orig_upload_date(page.latest_revision) == "ineligible") or \
+            (process_orig_upload_log(page) == "ineligible") or \
+            (process_fileimporter(page) == "ineligible") );
 
 # Simple helper function to determine if eligible for migration.
 # Input: Page object. Output: bool.
 def isEligible(page):
-    return (process_orig_upload_date(page.latest_revision) == "eligible" or\
-          process_orig_upload_log(page) == "eligible")
+    return (process_orig_upload_date(page.latest_revision) == "eligible") or\
+          (process_orig_upload_log(page) == "eligible") or \
+          (process_fileimporter(page) == "eligible")
 
 # Return 1 if user is opted out manually, 2 if automatically, 0 if neither.
 def isOptedOut(page):
@@ -343,26 +361,28 @@ def isOptedOut(page):
 def main():
     cat = pywikibot.Category(site, categoryName)
     i = 0;
-    # for page in cat.articles(startprefix="A"):
+    # for page in cat.articles(startprefix="F"):
     for page in cat.articles():
+    # page = pywikibot.FilePage(site, "File:BariIcircoscrizione.gif")
+    # while i == 0:
         i = i + 1;
         sys.stdout.flush()
-        time.sleep(0.3)
+        # time.sleep(0.3)
         
-        # If the file is redundant, it doesn't matter if it's inelgible.
+        # If the file is redundant, it doesn't matter if it's ineligible.
         if migration_redundant(page):
             # Function already did replacement
             print('Migration redundant, i = {0}.'.format(i))
-        elif isInelgible(page):
+        elif isineligible(page):
             # If the changes succeeded
-            if (migration_inelgible(page)):
-                print('Migration inelgible, i = {0}.'.format(i));
+            if (migration_ineligible(page)):
+                print('Migration ineligible, i = {0}.'.format(i));
             # If it failed
             else:
                 print("BEGIN PAGE {0} ({1}):".format(i, page.title()))
                 print(page.get())
                 print("END PAGE {0}".format(i))
-                print(('Migration inelgible, but no replacement made!'\
+                print(('Migration ineligible, but no replacement made!'\
                  + ' (i= {0})').format(i));
         elif (isOptedOut(page) == 1):
             # User in the Opted out -- manual list
@@ -382,7 +402,7 @@ def main():
                     print("BEGIN PAGE {0} ({1}):".format(i, page.title()))
                     print(page.get())
                     print("END PAGE {0}".format(i))
-                    print(('Migration elgible, but no replacement made!'\
+                    print(('Migration eligible, but no replacement made!'\
                      + ' (i= {0})').format(i))
         else:
             print("BEGIN PAGE {0} ({1}):".format(i, page.title()))
